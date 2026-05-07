@@ -155,6 +155,91 @@ print(result['output'])
 
 ---
 
+## LLM + ML Integration / LLM与机器学习结合
+
+### Architecture / 架构设计
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    LLM 智能代理层                       │
+│  (LangChain + SiliconFlow DeepSeek)                     │
+│  - 自然语言交互 / Natural Language Interaction           │
+│  - 异常分析与解释 / Anomaly Analysis                     │
+│  - 决策建议生成 / Decision Recommendations              │
+└───────────────────────┬─────────────────────────────────┘
+                        │ Tool Call / 工具调用
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│                  传统ML算法层                            │
+│  (Isolation Forest - 孤立森林)                          │
+│  - 异常检测核心逻辑 / Core Detection Logic               │
+│  - 异常评分计算 / Anomaly Scoring                        │
+│  - 严重程度分级 / Severity Classification               │
+└───────────────────────┬─────────────────────────────────┘
+                        │ Data Input / 数据输入
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│                   传感器数据层                           │
+│  - 实时传感器读数 / Real-time Sensor Readings            │
+│  - 历史数据存储 / Historical Data Storage                │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Collaboration Flow / 协作流程
+
+```
+User Query → LLM decides to call tools → ML algorithm detects anomalies → 
+Results returned to LLM → LLM explains in natural language
+
+用户提问 → LLM决定调用工具 → ML算法检测异常 → 
+返回结果给LLM → LLM用自然语言解释
+```
+
+### Integration Benefits / 结合优势
+
+| Aspect / 维度 | Traditional ML / 传统机器学习 | LLM |
+| :--- | :--- | :--- |
+| **Data Processing** | Structured numerical data | Unstructured text |
+| **Reasoning** | Statistical patterns | Semantic understanding |
+| **Interpretability** | Limited (black box) | Strong (natural language) |
+| **Interaction** | API calls | Natural language dialogue |
+| **Decision Making** | Output labels/scores | Generate action recommendations |
+
+| 维度 | 传统ML (Isolation Forest) | LLM |
+| :--- | :--- | :--- |
+| **数据处理** | 擅长结构化数值数据 | 擅长非结构化文本 |
+| **推理能力** | 基于统计模式 | 基于语义理解 |
+| **可解释性** | 有限（黑盒模型） | 强（自然语言解释） |
+| **交互方式** | API调用 | 自然语言对话 |
+| **决策建议** | 输出标签/分数 | 生成行动建议 |
+
+### Practical Applications / 实际应用场景
+
+1. **实时监控 / Real-time Monitoring**
+   - ML detects anomaly → LLM generates alert description → Notify operator
+
+2. **Root Cause Analysis / 根因分析**
+   - User: "Why is MACHINE-01 showing anomaly?"
+   - LLM calls tools → Analyzes sensor trends → Explains possible causes
+
+3. **Historical Analysis / 历史数据分析**
+   - User: "What's the anomaly trend for MACHINE-02 in the past week?"
+   - LLM queries database → Analyzes patterns → Generates report
+
+### Core Value / 核心价值
+
+This integration achieves **"Precise Detection + Intelligent Understanding"**:
+- **ML ensures detection accuracy** - Isolation Forest provides reliable anomaly identification
+- **LLM improves usability** - Converts scores into human-understandable recommendations
+- **Flexible interaction** - Supports natural language queries, lowering usage barriers
+
+实现 **"精准检测 + 智能理解"** 的闭环：
+- **ML保证检测的准确性** - Isolation Forest提供可靠的异常识别
+- **LLM提升可用性** - 将冷冰冰的分数转化为人类可理解的建议
+- **灵活的交互方式** - 支持自然语言查询，降低使用门槛
+
+---
+
 ## License / 许可证
 
 MIT License
