@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Machine Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .controls button {
+            padding: 8px 20px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .controls button:hover {
+            background: #2563eb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .sensors {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .sensor {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .sensor-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .sensor-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .status-normal {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-anomaly {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .anomaly-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .anomaly-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .anomaly-item.critical {
+            border-color: #ef4444;
+        }
+
+        .anomaly-item.high {
+            border-color: #f59e0b;
+        }
+
+        .anomaly-item.medium {
+            border-color: #3b82f6;
+        }
+
+        .anomaly-item small {
+            color: #666;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auto-refresh input {
+            width: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🏭 Machine Monitoring Dashboard</h1>
+        <div class="controls">
+            <label for="machineSelect">Machine:</label>
+            <select id="machineSelect">
+                {% for machine in machines %}
+                <option value="{{ machine }}">{{ machine }}</option>
+                {% endfor %}
+            </select>
+
+            <button onclick="loadData()">Refresh Now</button>
+
+            <div class="auto-refresh">
+                <input type="checkbox" id="autoRefresh" checked>
+                <label for="autoRefresh">Auto-refresh (5s)</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Current Sensor Readings</h3>
+            <div id="statusIndicator" class="status-indicator status-normal">
+                ✅ Normal Operation
+            </div>
+            <div class="sensors" id="sensorDisplay">
+                <p style="color:#999; text-align:center; padding:40px 0; grid-column:1/3;">Loading...</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Recent Anomalies</h3>
+            <div class="anomaly-list" id="anomalyList">
+                <p style="color:#999; text-align:center; padding:40px 0;">No anomalies detected</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+
+        async function loadData() {
+            const machine = document.getElementById('machineSelect').value;
+
+            try {
+                // Fetch current readings
+                const readingsResp = await fetch(`/api/readings/${machine}`);
+                const readingsData = await readingsResp.json();
+
+                // Fetch anomaly history
+                const anomaliesResp = await fetch(`/api/anomalies/${machine}`);
+                const anomaliesData = await anomaliesResp.json();
+
+                // Update display
+                updateSensorDisplay(readingsData);
+                updateAnomalyList(anomaliesData.anomalies);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function updateSensorDisplay(data) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const sensorDisplay = document.getElementById('sensorDisplay');
+
+            // Update status
+            if (data.is_anomaly) {
+                statusIndicator.className = 'status-indicator status-anomaly';
+                statusIndicator.innerHTML = `⚠️ ANOMALY DETECTED - Severity: ${data.severity}`;
+            } else {
+                statusIndicator.className = 'status-indicator status-normal';
+                statusIndicator.innerHTML = '✅ Normal Operation';
+            }
+
+            // Update sensors
+            sensorDisplay.innerHTML = `
+        <div class="sensor">
+            <div class="sensor-label">Temperature</div>
+            <div class="sensor-value">${data.temperature.toFixed(1)}°C</div>
+        </div>
+        <div class="sensor">
+            <div class="sensor-label">Vibration</div>
+            <div class="sensor-value">${data.vibration.toFixed(3)} mm/s</div>
+        </div>
+        <div class="sensor">
+            <div class="sensor-label">Pressure</div>
+            <div class="sensor-value">${data.pressure.toFixed(1)} PSI</div>
+        </div>
+        <div class="sensor">
+            <div class="sensor-label">RPM</div>
+            <div class="sensor-value">${Math.round(data.rpm)}</div>
+        </div>
+        <div class="sensor">
+            <div class="sensor-label">Power</div>
+            <div class="sensor-value">${data.power_consumption.toFixed(0)} W</div>
+        </div>
+        <div class="sensor">
+            <div class="sensor-label">Anomaly Score</div>
+            <div class="sensor-value">${data.anomaly_score.toFixed(3)}</div>
+        </div>
+    `;
+        }
+
+        function updateAnomalyList(anomalies) {
+            const list = document.getElementById('anomalyList');
+
+            if (anomalies.length === 0) {
+                list.innerHTML = '<p style="color:#999; text-align:center; padding:40px 0;">No anomalies detected</p>';
+                return;
+            }
+
+            list.innerHTML = anomalies.slice(0, 20).map(a => `
+        <div class="anomaly-item ${a.severity.toLowerCase()}">
+            <strong>${a.severity} - ${a.sensor_type}</strong>
+            <div>Score: ${a.anomaly_score.toFixed(3)} | Temp: ${a.temperature}°C | Vib: ${a.vibration}</div>
+            <small>${new Date(a.created_at).toLocaleString()}</small>
+        </div>
+    `).join('');
+        }
+
+        // Auto-refresh toggle
+        document.getElementById('autoRefresh').addEventListener('change', function (e) {
+            if (e.target.checked) {
+                autoRefreshInterval = setInterval(loadData, 5000);
+            } else {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            }
+        });
+
+        // Machine change handler
+        document.getElementById('machineSelect').addEventListener('change', loadData);
+
+        // Initial load
+        window.onload = function () {
+            loadData();
+            autoRefreshInterval = setInterval(loadData, 5000);
+        };
+    </script>
+</body>
+
+</html>
