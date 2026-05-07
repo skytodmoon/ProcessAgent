@@ -80,24 +80,24 @@ class SensorSimulator:
         readings = {
             'machine_id': machine_id,
             'timestamp': datetime.now().isoformat(),
-            'temperature': round(np.random.normal(base['base_temp'], 2), 2),
-            'vibration': round(np.random.normal(base['base_vibration'], 0.05), 3),
-            'pressure': round(np.random.normal(base['base_pressure'], 3), 2),
-            'rpm': round(np.random.normal(base['base_rpm'], 50), 0),
-            'power_consumption': round(np.random.normal(1000, 30), 2)
+            'temperature': float(round(np.random.normal(base['base_temp'], 2), 2)),
+            'vibration': float(round(np.random.normal(base['base_vibration'], 0.05), 3)),
+            'pressure': float(round(np.random.normal(base['base_pressure'], 3), 2)),
+            'rpm': int(round(np.random.normal(base['base_rpm'], 50), 0)),
+            'power_consumption': float(round(np.random.normal(1000, 30), 2))
         }
         
         # Inject anomaly if requested
         if include_anomaly:
             anomaly_choice = random.choice(['temperature', 'vibration', 'pressure', 'rpm'])
             if anomaly_choice == 'temperature':
-                readings['temperature'] += random.uniform(15, 25)
+                readings['temperature'] = float(readings['temperature'] + random.uniform(15, 25))
             elif anomaly_choice == 'vibration':
-                readings['vibration'] += random.uniform(0.3, 0.8)
+                readings['vibration'] = float(readings['vibration'] + random.uniform(0.3, 0.8))
             elif anomaly_choice == 'pressure':
-                readings['pressure'] -= random.uniform(20, 35)
+                readings['pressure'] = float(readings['pressure'] - random.uniform(20, 35))
             elif anomaly_choice == 'rpm':
-                readings['rpm'] += random.uniform(-400, 400)
+                readings['rpm'] = int(readings['rpm'] + random.uniform(-400, 400))
         
         return readings
     

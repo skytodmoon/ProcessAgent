@@ -39,7 +39,7 @@ class AnomalyDetector:
         anomaly_score = self.model.score_samples(features)[0]
         
         # -1 means anomaly, 1 means normal
-        is_anomaly = (prediction == -1)
+        is_anomaly = bool(prediction == -1)
         
         # Determine severity based on anomaly score
         # More negative scores = more anomalous
